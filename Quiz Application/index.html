@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Application</title>
     <style>
-        *{
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         .main {
             display: flex;
             width: 100%;
@@ -18,7 +19,8 @@
             justify-content: center;
             align-items: center;
         }
-        .container{
+
+        .container {
             width: 700px;
             padding: 20px;
             /* background-color: aqua; */
@@ -26,7 +28,8 @@
             border-radius: 5px;
             position: relative;
         }
-        .timer{
+
+        .timer {
             position: absolute;
             right: 20px;
             background-color: blue;
@@ -38,24 +41,29 @@
             align-items: center;
             border-radius: 30px;
         }
-        .options{
+
+        .options {
             display: flex;
             flex-direction: column;
             justify-content: center;
             margin: 20px 0px;
         }
-        .options label{
+
+        .options label {
             display: flex;
             align-items: center;
             height: 30px;
         }
-        .options label:hover{
+
+        .options label:hover {
             background-color: rgb(38, 183, 183);
         }
-        input{
+
+        input {
             margin-right: 20px;
         }
-        .next{
+
+        .next {
             width: 100px;
             height: 30px;
             background-color: rgb(0, 0, 255);
@@ -64,32 +72,41 @@
             color: white;
             font-weight: bold;
         }
-        .next:hover{
+
+        .next:hover {
             background-color: rgb(0, 0, 173);
 
         }
-        </style>
+
+        /* For Chart */
+        canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+    </style>
 </head>
 
 <body>
     <div class="main">
         <div class="container">
-            <div class="timer" id="timer">30</div>
+            <div class="timer" id="timer"></div>
             <div class="question">
-                <h1 class="q" id="q">Which language runs in a web browser?</h1>
+                <h1 class="q" id="q"></h1>
             </div>
-            <div class="options">
+            <div class="options" id="options">
                 <label for="opt1"><input type="radio" name="option" id="opt1"><span id="option1"></span></label>
                 <label for="opt2"><input type="radio" name="option" id="opt2"><span id="option2"></span></label>
                 <label for="opt3"><input type="radio" name="option" id="opt3"><span id="option3"></span></label>
                 <label for="opt4"><input type="radio" name="option" id="opt4"><span id="option4"></span></label>
             </div>
-            <div class="next">
+            <div class="next" id="next">
                 <button class="next" onclick="nextQuestion()">Next</button>
             </div>
         </div>
     </div>
-<script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

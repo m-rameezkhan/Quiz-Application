@@ -84,29 +84,114 @@ function showQuestion(index) {
   option3.innerHTML = jsQuestions[index].options[2];
   option4.innerHTML = jsQuestions[index].options[3];
 }
-let current = 0
 
+function showResult(score, total) {
+  let options = document.getElementById("options")
+  question.innerHTML = ""
+  options.innerHTML = `<h1>Quiz Completed</h1>
+            <div class="chart">
+                <canvas id="quizOutlineChart" width="300" height="300"></canvas>
+            </div>`
+  document.getElementById('timer').innerHTML = "";
+  clearInterval(interval);
+
+  renderOutlineChart(score, total);
+}
+
+function renderOutlineChart(score, total) {
+  const ctx = document.getElementById("quizOutlineChart").getContext("2d");
+  const percentage = ((score / total) * 100).toFixed(1); // Calculate percentage
+
+  // Create the chart
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Score', 'Remaining'],
+      datasets: [{
+        data: [percentage, 100 - percentage],
+        backgroundColor: ['#4CAF50', '#E0E0E0'],
+        borderWidth: 0,
+        cutout: '80%', // Makes the chart look like an outline
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false, // Hide legend for simplicity
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return context.label + ': ' + context.raw.toFixed(1) + '%';
+            }
+          }
+        },
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true,
+      },
+    },
+    plugins: [{
+      id: 'textCenter',
+      beforeDraw: function (chart) {
+        const { width, height, ctx } = chart;
+        ctx.save();
+        const fontSize = (height / 90).toFixed(2);
+        ctx.font = `${fontSize}em Arial`;
+        ctx.fillStyle = '#4CAF50';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const text = percentage + '%';
+        const textX = width / 2;
+        const textY = height / 2;
+        ctx.fillText(text, textX, textY);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+let current = 0
+let score = 0;
+let total = 10;
 function nextQuestion() {
   current++;
 
   let inputs = document.getElementsByTagName('input');
-  for (let i = 0; i < inputs.length; i++) {
-    if (inputs[i].type === 'radio') {
-      inputs[i].checked = false;
-    }
-  }
 
   if (current < jsQuestions.length) {
     showQuestion(current);
     counterStart(); // restart timer with each new question
   } else {
-    question.innerHTML = "Quiz completed!";
-    option1.innerHTML = "";
-    option2.innerHTML = "";
-    option3.innerHTML = "";
-    option4.innerHTML = "";
-    document.getElementById('timer').innerHTML = "";
-    clearInterval(interval); // make sure timer is cleared
+    showResult(score, total)
+    return;
+  }
+
+  let selectedIndex = -1;
+  Array.from(inputs).forEach((element, index) => {
+    if (element.checked) {
+      selectedIndex = index;
+    }
+  });
+
+  if (selectedIndex !== -1) {
+    console.log(jsQuestions[current - 1].options[selectedIndex])
+    if (jsQuestions[current - 1].options[selectedIndex] === jsQuestions[current - 1].answer) {
+      console.log("Correct Answer");
+      score++
+    } else {
+      console.log("Wrong Answer");
+    }
+  } else {
+    console.log("No option selected");
+  }
+
+  for (let i = 0; i < inputs.length; i++) {
+    if (inputs[i].type === 'radio') {
+      inputs[i].checked = false;
+    }
   }
 }
 
