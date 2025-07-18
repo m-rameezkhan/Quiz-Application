@@ -1,67 +1,72 @@
-const jsQuestions = [
-  {
-    question: "What is the capital of France?",
-    options: ["London", "Berlin", "Paris", "Madrid"],
-    answer: "Paris"
-  },
-  {
-    question: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Saturn"],
-    answer: "Mars"
-  },
-  {
-    question: "What is 5 + 3?",
-    options: ["5", "8", "9", "7"],
-    answer: "8"
-  },
-  {
-    question: "Which language runs in a web browser?",
-    options: ["Java", "C", "Python", "JavaScript"],
-    answer: "JavaScript"
-  },
-  {
-    question: "Who painted the Mona Lisa?",
-    options: ["Picasso", "Da Vinci", "Van Gogh", "Rembrandt"],
-    answer: "Da Vinci"
-  },
-  {
-    question: "Which gas do plants absorb from the atmosphere?",
-    options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
-    answer: "Carbon Dioxide"
-  },
-  {
-    question: "What is the largest mammal?",
-    options: ["Elephant", "Whale", "Hippopotamus", "Giraffe"],
-    answer: "Whale"
-  },
-  {
-    question: "How many continents are there?",
-    options: ["5", "6", "7", "8"],
-    answer: "7"
-  },
-  {
-    question: "Which country is known as the Land of the Rising Sun?",
-    options: ["China", "Japan", "Thailand", "India"],
-    answer: "Japan"
-  },
-  {
-    question: "What is the boiling point of water?",
-    options: ["90°C", "100°C", "80°C", "120°C"],
-    answer: "100°C"
-  }
-];
+let quizData = [];
+let current = 0;
+let score = 0;
+let total = 5;
 let interval;
 
-function counterStart() {
-  clearInterval(interval); // stop any previous timer
+const qEl = document.getElementById('q');
+const timerEl = document.getElementById('timer');
+const optionEls = [
+  document.getElementById('option1'),
+  document.getElementById('option2'),
+  document.getElementById('option3'),
+  document.getElementById('option4')
+];
 
+// Fetch quiz questions on load
+fetch('https://opentdb.com/api.php?amount=5&type=multiple')
+  .then(res => res.json())
+  .then(data => {
+    quizData = data.results.map(formatQuestion);
+    total = quizData.length;
+    showQuestion(current);
+    counterStart();
+  })
+  .catch(err => {
+    qEl.innerText = 'Failed to load quiz.';
+    console.error(err);
+  });
+
+function formatQuestion(apiQuestion) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = apiQuestion.question;
+  const question = txt.value;
+
+  txt.innerHTML = apiQuestion.correct_answer;
+  const correct = txt.value;
+
+  const incorrects = apiQuestion.incorrect_answers.map(ans => {
+    txt.innerHTML = ans;
+    return txt.value;
+  });
+
+  const options = [...incorrects];
+  const correctIndex = Math.floor(Math.random() * 4);
+  options.splice(correctIndex, 0, correct);
+
+  return {
+    question,
+    options,
+    answer: correct
+  };
+}
+
+function showQuestion(index) {
+  const q = quizData[index];
+  qEl.innerHTML = q.question;
+  for (let i = 0; i < 4; i++) {
+    optionEls[i].innerText = q.options[i];
+  }
+}
+
+function counterStart() {
+  clearInterval(interval);
   let jsSec = 30;
-  let htmlSec = document.getElementById('timer');
-  htmlSec.innerHTML = jsSec;
+  timerEl.innerHTML = jsSec;
 
   interval = setInterval(() => {
     jsSec--;
-    htmlSec.innerHTML = jsSec;
+    timerEl.innerHTML = jsSec;
 
     if (jsSec <= 0) {
       clearInterval(interval);
@@ -69,40 +74,55 @@ function counterStart() {
     }
   }, 1000);
 }
-counterStart()
 
-let question = document.getElementById('q')
-let option1 = document.getElementById('option1')
-let option2 = document.getElementById('option2')
-let option3 = document.getElementById('option3')
-let option4 = document.getElementById('option4')
+function nextQuestion() {
+  let inputs = document.getElementsByTagName('input');
+  let selectedIndex = -1;
 
-function showQuestion(index) {
-  question.innerHTML = jsQuestions[index].question;
-  option1.innerHTML = jsQuestions[index].options[0];
-  option2.innerHTML = jsQuestions[index].options[1];
-  option3.innerHTML = jsQuestions[index].options[2];
-  option4.innerHTML = jsQuestions[index].options[3];
+  Array.from(inputs).forEach((element, index) => {
+    if (element.checked) {
+      selectedIndex = index;
+    }
+  });
+
+  if (selectedIndex !== -1) {
+    if (quizData[current].options[selectedIndex] === quizData[current].answer) {
+      score++;
+    }
+  }
+
+  current++;
+  if (current < total) {
+    showQuestion(current);
+    counterStart();
+    Array.from(inputs).forEach(input => input.checked = false);
+  } else {
+    showResult();
+  }
 }
 
-function showResult(score, total) {
-  let options = document.getElementById("options")
-  question.innerHTML = ""
-  options.innerHTML = `<h1>Quiz Completed</h1>
-            <div class="chart">
-                <canvas id="quizOutlineChart" width="300" height="300"></canvas>
-            </div>`
-  document.getElementById('timer').innerHTML = "";
+function showResult() {
+  qEl.innerHTML = "";
+  document.getElementById('options').innerHTML = `
+        <h1>Quiz Completed</h1>
+        <div class="chart">
+            <canvas id="quizOutlineChart" width="300" height="300"></canvas>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+            <button class="next" onclick="restartQuiz()">Try Again</button>
+        </div>
+    `;
+  timerEl.innerHTML = "";
   clearInterval(interval);
-
   renderOutlineChart(score, total);
+  document.getElementById('clearBtn').style.display = 'none';
 }
+
 
 function renderOutlineChart(score, total) {
   const ctx = document.getElementById("quizOutlineChart").getContext("2d");
-  const percentage = ((score / total) * 100).toFixed(1); // Calculate percentage
+  const percentage = ((score / total) * 100).toFixed(1);
 
-  // Create the chart
   new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -111,20 +131,16 @@ function renderOutlineChart(score, total) {
         data: [percentage, 100 - percentage],
         backgroundColor: ['#4CAF50', '#E0E0E0'],
         borderWidth: 0,
-        cutout: '80%', // Makes the chart look like an outline
+        cutout: '80%',
       }],
     },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          display: false, // Hide legend for simplicity
-        },
+        legend: { display: false },
         tooltip: {
           callbacks: {
-            label: function (context) {
-              return context.label + ': ' + context.raw.toFixed(1) + '%';
-            }
+            label: ctx => `${ctx.label}: ${ctx.raw.toFixed(1)}%`
           }
         },
       },
@@ -143,56 +159,49 @@ function renderOutlineChart(score, total) {
         ctx.fillStyle = '#4CAF50';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const text = percentage + '%';
-        const textX = width / 2;
-        const textY = height / 2;
-        ctx.fillText(text, textX, textY);
+        ctx.fillText(percentage + '%', width / 2, height / 2);
         ctx.restore();
       }
     }]
   });
 }
 
-let current = 0
-let score = 0;
-let total = 10;
-function nextQuestion() {
-  current++;
-
-  let inputs = document.getElementsByTagName('input');
-
-  if (current < jsQuestions.length) {
-    showQuestion(current);
-    counterStart(); // restart timer with each new question
-  } else {
-    showResult(score, total)
-    return;
-  }
-
-  let selectedIndex = -1;
-  Array.from(inputs).forEach((element, index) => {
-    if (element.checked) {
-      selectedIndex = index;
-    }
-  });
-
-  if (selectedIndex !== -1) {
-    console.log(jsQuestions[current - 1].options[selectedIndex])
-    if (jsQuestions[current - 1].options[selectedIndex] === jsQuestions[current - 1].answer) {
-      console.log("Correct Answer");
-      score++
-    } else {
-      console.log("Wrong Answer");
-    }
-  } else {
-    console.log("No option selected");
-  }
-
-  for (let i = 0; i < inputs.length; i++) {
-    if (inputs[i].type === 'radio') {
-      inputs[i].checked = false;
-    }
-  }
+function clearSelection() {
+  const inputs = document.getElementsByTagName('input');
+  Array.from(inputs).forEach(input => input.checked = false);
 }
 
-showQuestion(current)
+function restartQuiz() {
+  current = 0;
+  score = 0;
+  qEl.innerText = "Loading...";
+  timerEl.innerText = "30";
+  document.getElementById('clearBtn').style.display = 'inline-block';
+
+  document.getElementById('options').innerHTML = `
+        <label><input type="radio" name="option" id="opt1"><span id="option1"></span></label>
+        <label><input type="radio" name="option" id="opt2"><span id="option2"></span></label>
+        <label><input type="radio" name="option" id="opt3"><span id="option3"></span></label>
+        <label><input type="radio" name="option" id="opt4"><span id="option4"></span></label>
+    `;
+
+  // re-get the option span references because DOM has been replaced
+  optionEls[0] = document.getElementById('option1');
+  optionEls[1] = document.getElementById('option2');
+  optionEls[2] = document.getElementById('option3');
+  optionEls[3] = document.getElementById('option4');
+
+  fetch('https://opentdb.com/api.php?amount=5&type=multiple')
+    .then(res => res.json())
+    .then(data => {
+      quizData = data.results.map(formatQuestion);
+      total = quizData.length;
+      showQuestion(current);
+      counterStart();
+    })
+    .catch(err => {
+      qEl.innerText = 'Failed to load quiz.';
+      console.error(err);
+    });
+}
+
